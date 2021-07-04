@@ -1,0 +1,4 @@
+syncdbdocs
+go.sum
+temp*
+out.*
