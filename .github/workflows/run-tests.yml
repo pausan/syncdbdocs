@@ -1,0 +1,29 @@
+name: Run Tests
+on: [push, pull_request]
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        postgres_version: [
+          "9-alpine",
+          "10-alpine",
+          "11-alpine",
+          "12-alpine",
+          "13-alpine"
+        ]
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install module & dependencies
+        env:
+          PG_IMAGE_VERSION: ${{ matrix.postgres_version }}
+
+        run: |
+          cd ${{ github.workspace }}
+          make build
+          make up
+          make test
+          make down
