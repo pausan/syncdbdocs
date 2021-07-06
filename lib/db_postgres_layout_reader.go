@@ -13,6 +13,7 @@ import (
 // -----------------------------------------------------------------------------
 func (conn *DbConnection) getPostgresDbLayout() (*DbLayout, error) {
 	dbLayout := NewDbLayout(conn.dbName)
+	dbLayout.Type = DbTypePostgres
 
 	type PgFieldSchema struct {
 		TableSchema            string
@@ -20,7 +21,7 @@ func (conn *DbConnection) getPostgresDbLayout() (*DbLayout, error) {
 		ColumnName             string
 		IsNullable             string // YES | NO
 		TypeName               string // varchar | timestamp | uuid | int2 | int8 | ...
-		CharacterMaximumLength *uint32
+		CharacterMaximumLength uint32
 	}
 
 	pgFields := []PgFieldSchema{}
@@ -30,7 +31,12 @@ func (conn *DbConnection) getPostgresDbLayout() (*DbLayout, error) {
 		ctx,
 		conn.db,
 		&pgFields,
-		`SELECT table_schema, table_name, column_name, is_nullable, udt_name as type_name, character_maximum_length
+		`SELECT table_schema,
+		        table_name,
+		        column_name,
+		        is_nullable,
+		        udt_name as type_name,
+		        COALESCE(character_maximum_length, 0) as character_maximum_length
        FROM information_schema.columns
       WHERE table_schema not in ('information_schema', 'pg_catalog')
 		`,
@@ -40,15 +46,10 @@ func (conn *DbConnection) getPostgresDbLayout() (*DbLayout, error) {
 	}
 
 	for _, pgField := range pgFields {
-		var length uint = 0
-		if pgField.CharacterMaximumLength != nil {
-			length = uint(*pgField.CharacterMaximumLength)
-		}
-
 		field := NewDbFieldLayout(pgField.ColumnName)
 		field.Type = pgField.TypeName
 		field.IsNullable = pgField.IsNullable == "YES"
-		field.Length = length
+		field.Length = pgField.CharacterMaximumLength
 
 		// TODO: field.IsPrimaryKey
 		// TODO: field.IsUnique
@@ -64,8 +65,6 @@ func (conn *DbConnection) getPostgresDbLayout() (*DbLayout, error) {
 			log.Println("Ignoring error:", err)
 		}
 	}
-
-	dbLayout.Type = DbTypePostgres
 
 	// field.Comment will be updated here
 	err = conn.getPostgresDbComments(&dbLayout)

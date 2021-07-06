@@ -2,9 +2,16 @@
 package lib
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
+
+	// SQL drivers
+	"github.com/georgysavva/scany/sqlscan"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 const (
@@ -72,23 +79,37 @@ func DbConnect(
 	*DbConnection,
 	error,
 ) {
+	dbtype = strings.ToLower(dbtype)
 	if dbtype == "" || dbtype == "auto" {
 		return tryDbConnect(dbhost, dbport, dbuser, dbpass, dbname)
 	}
+
+	isZeroPort := (dbport == 0)
 
 	conn := NewDbConnection()
 	conn.dbName = dbname
 
 	switch dbtype {
 	case "pg", "postgres", "pgx":
+		if isZeroPort {
+			dbport = 5432
+		}
 		conn.driverType = DriverPostgres
 		conn.connectionString = fmt.Sprintf(
 			"postgres://%s:%s@%s:%d/%s", dbuser, dbpass, dbhost, dbport, dbname,
 		)
+	case "mysql", "mariadb":
+		if isZeroPort {
+			dbport = 3306
+		}
+		conn.driverType = DriverMysql
+		conn.connectionString = fmt.Sprintf(
+			"%s:%s@tcp(%s:%d)/%s", dbuser, dbpass, dbhost, dbport, dbname,
+		)
 
 	default:
 		conn = nil
-		return nil, errors.New("Invalid database type. Try with: pg | mysql | mssql | sqlite")
+		return nil, errors.New("Unsupported database type. Try with: pg | mysql | mssql | sqlite")
 	}
 
 	var err error
@@ -117,18 +138,24 @@ func tryDbConnect(
 	*DbConnection,
 	error,
 ) {
-	isZeroPort := (dbport == 0)
+	drivers := []string{DriverPostgres, DriverMysql}
 
-	// try with postgres
-	if isZeroPort {
-		dbport = 5432
-	}
-	conn, err := DbConnect("pgx", dbhost, dbport, dbuser, dbpass, dbname)
-	if err == nil {
-		return conn, nil
-	}
+	for _, driver := range drivers {
+		conn, err := DbConnect(driver, dbhost, dbport, dbuser, dbpass, dbname)
+		if err == nil {
+			// port is open BUT it might be another db... let's try a simple query
+			result := []int{}
+			ctx := context.Background()
+			err = sqlscan.Select(ctx, conn.db, &result, `SELECT 1`)
+			if err != nil {
+				conn.Close()
+				continue
+			}
 
-	// TODO: try with mysql | mssql | sqlite | ...
+			// success!
+			return conn, nil
+		}
+	}
 
 	return nil, errors.New("Could not connect to the database. Try specifying the database type.")
 }
@@ -154,6 +181,8 @@ func (conn *DbConnection) GetLayout() (*DbLayout, error) {
 	switch conn.driverType {
 	case DriverPostgres:
 		return conn.getPostgresDbLayout()
+	case DriverMysql:
+		return conn.getMysqlDbLayout()
 	default:
 		return nil, errors.New("Don't know how to read db layout for " + conn.driverType + " databases")
 	}

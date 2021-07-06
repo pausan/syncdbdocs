@@ -69,7 +69,7 @@ func (layoutParser *DbLayoutTextParser) ParseHeader(line string) {
 
 	case 3: // ### table_name
 		if layoutParser.SchemaPtr == nil {
-			newSchema := NewDbSchemaLayout("")
+			newSchema := NewDbSchemaLayout(NoDbSchemaLayoutName)
 			layoutParser.SchemaPtr = &newSchema
 			layoutParser.LayoutPtr.Schemas = append(layoutParser.LayoutPtr.Schemas, layoutParser.SchemaPtr)
 		}

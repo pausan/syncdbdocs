@@ -1,7 +1,7 @@
 name: Run Tests
 on: [push, pull_request]
 jobs:
-  run-tests:
+  run-pg-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -17,7 +17,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
 
-      - name: Install module & dependencies
+      - name: Build & test postgres
         env:
           PG_IMAGE_VERSION: ${{ matrix.postgres_version }}
 
@@ -25,5 +25,28 @@ jobs:
           cd ${{ github.workspace }}
           make build
           make up
-          make test
+          make test-pg
+          make down
+
+  run-mysql-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mysql_version: [
+          "8-alpine"
+        ]
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Build & test mysql
+        env:
+          MYSQL_VERSION: ${{ matrix.mysql_version }}
+
+        run: |
+          cd ${{ github.workspace }}
+          make build
+          make up
+          make test-mysql
           make down

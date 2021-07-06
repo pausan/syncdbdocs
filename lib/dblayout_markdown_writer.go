@@ -90,12 +90,14 @@ func (dbLayout *DbLayout) printTextWithEscapeFunction(
 	//       readability comes first.
 
 	for _, schemaLayout := range dbLayout.Schemas {
-		fmt.Fprintln(out, "## "+escape(schemaLayout.Name))
-		fmt.Fprintln(out)
-		if len(schemaLayout.Comment) > 0 {
-			comment := escape(schemaLayout.Comment)
-			fmt.Fprintln(out, ww.Wrap(comment))
+		if schemaLayout.Name != NoDbSchemaLayoutName {
+			fmt.Fprintln(out, "## "+escape(schemaLayout.Name))
 			fmt.Fprintln(out)
+			if len(schemaLayout.Comment) > 0 {
+				comment := escape(schemaLayout.Comment)
+				fmt.Fprintln(out, ww.Wrap(comment))
+				fmt.Fprintln(out)
+			}
 		}
 
 		for _, tableLayout := range schemaLayout.Tables {

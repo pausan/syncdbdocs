@@ -8,7 +8,7 @@ NETWORK_NAME ?= sdd_network_$(RANDVAR)
 SYNCDBDOCS_IMAGE ?= syncdbdocs
 
 PG_CONTAINER        ?= sdd_pg_$(RANDVAR)
-MYSQL_CONTAINER     ?= sdd_msyql_$(RANDVAR)
+MYSQL_CONTAINER     ?= sdd_mysql_$(RANDVAR)
 
 PG_IMAGE_VERSION    ?= latest
 MYSQL_IMAGE_VERSION ?= latest
@@ -18,7 +18,8 @@ DB_NAME = dbtest
 DB_USER = root
 DB_PASS = pass
 
-PG_PORT = 5432
+PG_PORT    = 5432
+MYSQL_PORT = 3306
 
 .PHONY: all test clean
 
@@ -43,7 +44,16 @@ db-up:
 	  -e POSTGRES_PASSWORD=$(DB_PASS) \
 	  postgres:$(PG_IMAGE_VERSION)
 
-migrate:
+	docker run -d --rm \
+	  --name $(MYSQL_CONTAINER) \
+	  --network $(NETWORK_NAME) \
+	  -e MYSQL_DATABASE=$(DB_NAME) \
+	  -e MYSQL_ROOT_PASSWORD=$(DB_PASS) \
+	  mysql:$(MYSQL_IMAGE_VERSION)
+
+migrate: | migrate-pg migrate-mysql
+
+migrate-pg:
 	docker run --rm \
 	  --network $(NETWORK_NAME) \
 		-v $(PWD)/test/postgres:/flyway/sql \
@@ -54,14 +64,26 @@ migrate:
 		-connectRetries=50 \
 		migrate
 
+migrate-mysql:
+	docker run --rm \
+	  --network $(NETWORK_NAME) \
+		-v $(PWD)/test/mysql:/flyway/sql \
+		flyway/flyway:7.11 \
+		-url=jdbc:mysql://$(MYSQL_CONTAINER):$(MYSQL_PORT)/$(DB_NAME) \
+		-user=$(DB_USER) \
+		-password=$(DB_PASS) \
+		-connectRetries=50 \
+		migrate
+
 db-down:
 	docker stop $(PG_CONTAINER) || true
+	docker stop $(MYSQL_CONTAINER) || true
 
 build:
 	docker build . --tag $(SYNCDBDOCS_IMAGE)
 
 
-RUN_SYNCDBDOCS = docker run --rm \
+PG_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
 	-e DB_PASSWORD=$(DB_PASS) \
 	-v $(PWD)/test/postgres:/tmp/testpg/:ro \
@@ -71,11 +93,31 @@ RUN_SYNCDBDOCS = docker run --rm \
 	-u $(DB_USER) \
 	-d $(DB_NAME)
 
-test:
-	$(RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result.md
-	$(RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
-	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "Test001.md failed" && false)
-	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "Test001.txt failed" && false)
+test-pg:
+	$(PG_RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result.md
+	$(PG_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
+	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "PG Test001.md failed" && false)
+	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "PG Test001.txt failed" && false)
 
-	$(RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
-	diff $(PWD)/test/postgres/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "Test002 failed" && false)
+	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "PG Test002 failed" && false)
+
+
+MYSQL_RUN_SYNCDBDOCS = docker run --rm \
+	--network $(NETWORK_NAME) \
+	-e DB_PASSWORD=$(DB_PASS) \
+	-v $(PWD)/test/mysql:/tmp/testmysql/:ro \
+	$(SYNCDBDOCS_IMAGE) \
+	-h $(MYSQL_CONTAINER) \
+	-p $(MYSQL_PORT) \
+	-u $(DB_USER) \
+	-d $(DB_NAME)
+
+test-mysql:
+	$(MYSQL_RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result.md
+	$(MYSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
+	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "MYSQL Test001.md failed" && false)
+	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "MYSQL Test001.txt failed" && false)
+
+# 	$(PG_RUN_SYNCDBDOCS) -i /tmp/testmysql/dbtest-preserve-order.input > /tmp/dbtest.result
+# 	diff $(PWD)/test/mysql/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "MYSQL Test002 failed" && false)

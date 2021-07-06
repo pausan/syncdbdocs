@@ -8,8 +8,6 @@ import (
 	"os"
 	"strings"
 	"syncdbdocs/lib"
-
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 func main() {
@@ -30,7 +28,7 @@ func main() {
 	flag.UintVar(&dbport, "p", 0, "Port on given host you want to connect to")
 	flag.StringVar(&dbuser, "u", "", "Username credentials (password should be set via DBPASSWORD env var)")
 	flag.StringVar(&dbname, "d", "", "Database name you want to connect to")
-	flag.StringVar(&dbtype, "t", "auto", "Database type: auto | pg | mysql | mssql")
+	flag.StringVar(&dbtype, "t", "auto", "Database type: auto | pg | mysql | mariadb | mssql | sqlite")
 	flag.StringVar(&inputFile, "i", "", "Use given input file to extend on")
 	flag.StringVar(&outputFile, "o", "", "Output file to generate")
 	flag.StringVar(&format, "format", "", "Output format (text | markdown | dbml)")
@@ -62,8 +60,13 @@ func main() {
 
 	conn, err := lib.DbConnect(dbtype, dbhost, dbport, dbuser, dbpass, dbname)
 	if err != nil {
+		connString := fmt.Sprintf("%s://%s:*****@%s:%d/%s", dbtype, dbuser, dbhost, dbport, dbname)
+		if conn != nil {
+			connString = strings.ReplaceAll(conn.GetConnectionString(), dbpass, "*****")
+		}
+
 		fmt.Println(err)
-		fmt.Println("ERROR: Cannot connect to the database: ", strings.ReplaceAll(conn.GetConnectionString(), dbpass, "*****"))
+		fmt.Println("ERROR: Cannot connect to the database: ", connString)
 		os.Exit(-2)
 	}
 	defer conn.Close()

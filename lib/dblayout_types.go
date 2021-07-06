@@ -12,7 +12,7 @@ type DbFieldLayout struct {
 	IsPrimaryKey bool
 	IsUnique     bool
 	IsNullable   bool
-	Length       uint
+	Length       uint32
 	Default      string
 	Comment      string
 }
@@ -47,6 +47,8 @@ const (
 	DbTypeMssql    = "MSSQL"
 	DbTypeSQLite   = "SQLite"
 )
+
+const NoDbSchemaLayoutName = ""
 
 // -----------------------------------------------------------------------------
 // NewDbLayout
