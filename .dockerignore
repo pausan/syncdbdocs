@@ -1,3 +1,4 @@
 syncdbdocs
 temp*
 out.*
+Makefile

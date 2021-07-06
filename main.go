@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"syncdbdocs/lib"
@@ -19,13 +20,27 @@ func main() {
 	var dbname string
 	var dbtype string
 
+	var inputFile string
+	var outputFile string
+	var format string
+	var lineLength int
+	// TODO: var syncToDb bool
+
 	flag.StringVar(&dbhost, "h", "127.0.0.1", "Host you want to connect to")
 	flag.UintVar(&dbport, "p", 0, "Port on given host you want to connect to")
-	flag.StringVar(&dbuser, "u", "root", "Username credentials (password should be set via DBPASSWORD env var)")
+	flag.StringVar(&dbuser, "u", "", "Username credentials (password should be set via DBPASSWORD env var)")
 	flag.StringVar(&dbname, "d", "", "Database name you want to connect to")
 	flag.StringVar(&dbtype, "t", "auto", "Database type: auto | pg | mysql | mssql")
+	flag.StringVar(&inputFile, "i", "", "Use given input file to extend on")
+	flag.StringVar(&outputFile, "o", "", "Output file to generate")
+	flag.StringVar(&format, "format", "", "Output format (text | markdown | dbml)")
+	flag.IntVar(&lineLength, "line-length", 80, "Set line length for the text/markdown representation")
+	// TODO: flag.BoolVar(&syncToDb, "sync-to-db", false, "Update database comments from markdown")
 
-	dbpass = os.Getenv("DBPASSWORD")
+	// dbhostEnv := os.Getenv("DB_HOST")
+	// dbportEnv := os.Getenv("DB_PORT")
+	dbuserEnv := os.Getenv("DB_USER")
+	dbpass = os.Getenv("DB_PASSWORD")
 
 	flag.Parse()
 
@@ -37,6 +52,12 @@ func main() {
 	// TODO: guess type from port, or just try
 	if dbport == 0 {
 		dbport = 5432
+	}
+
+	if len(dbuser) == 0 && len(dbuserEnv) == 0 {
+		dbuser = "root"
+	} else if len(dbuser) == 0 {
+		dbuser = dbuserEnv
 	}
 
 	conn, err := lib.DbConnect(dbtype, dbhost, dbport, dbuser, dbpass, dbname)
@@ -53,5 +74,44 @@ func main() {
 		os.Exit(-3)
 	}
 
-	dbLayout.PrintMarkdown(os.Stdout, 80)
+	// if output file exists and no input is specified, let's set input as
+	// the output so it will be rewritten but keeping the same order
+	if inputFile == "" && outputFile != "" {
+		if f, _ := os.Open(outputFile); f != nil {
+			inputFile = outputFile
+			f.Close()
+		}
+	}
+
+	if inputFile != "" {
+		fileLayout, err := lib.NewDbLayoutFromParsedFile(inputFile)
+		if err != nil {
+			fmt.Printf("ERROR: cannot read input file %s: %s\n", inputFile, err)
+			os.Exit(-4)
+		}
+
+		fileLayout.MergeFrom(dbLayout)
+		dbLayout = fileLayout
+	}
+
+	var outStream io.Writer = os.Stdout
+	if outputFile != "" {
+		ofile, err := os.Create(outputFile)
+		if err != nil {
+			fmt.Printf("ERROR: cannot open output file %s: %s\n", outputFile, err)
+			os.Exit(-5)
+		}
+		defer ofile.Close()
+
+		outStream = ofile
+	}
+
+	switch strings.ToLower(format) {
+	case "md", "markdown":
+		dbLayout.PrintMarkdown(outStream, lineLength)
+	case "txt", "plain", "text":
+		dbLayout.PrintText(outStream, lineLength)
+	default:
+		dbLayout.PrintText(outStream, lineLength)
+	}
 }
