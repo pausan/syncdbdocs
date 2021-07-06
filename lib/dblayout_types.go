@@ -3,6 +3,7 @@ package lib
 
 import (
 	"errors"
+	"sort"
 )
 
 type DbFieldLayout struct {
@@ -314,4 +315,57 @@ func (dbTableLayout *DbTableLayout) RebuildLookups() {
 	for _, fieldPtr := range dbTableLayout.Fields {
 		dbTableLayout.FieldLookup[fieldPtr.Name] = fieldPtr
 	}
+}
+
+type bySchemaName []*DbSchemaLayout
+
+func (a bySchemaName) Len() int           { return len(a) }
+func (a bySchemaName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a bySchemaName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+type byTableName []*DbTableLayout
+
+func (a byTableName) Len() int           { return len(a) }
+func (a byTableName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byTableName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+type byFieldName []*DbFieldLayout
+
+func (a byFieldName) Len() int           { return len(a) }
+func (a byFieldName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byFieldName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+// -----------------------------------------------------------------------------
+// Sort
+//
+// Sort inner objects in lexicographical order
+// -----------------------------------------------------------------------------
+func (dbLayout *DbLayout) Sort() {
+	sort.Sort(bySchemaName(dbLayout.Schemas))
+
+	for _, schemaPtr := range dbLayout.Schemas {
+		schemaPtr.Sort()
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Sort
+//
+// Sort inner objects in lexicographical order
+// -----------------------------------------------------------------------------
+func (dbSchemaLayout *DbSchemaLayout) Sort() {
+	sort.Sort(byTableName(dbSchemaLayout.Tables))
+
+	for _, tablePtr := range dbSchemaLayout.Tables {
+		tablePtr.Sort()
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Sort
+//
+// Sort inner objects in lexicographical order
+// -----------------------------------------------------------------------------
+func (dbTableLayout *DbTableLayout) Sort() {
+	sort.Sort(byFieldName(dbTableLayout.Fields))
 }

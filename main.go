@@ -74,6 +74,9 @@ func main() {
 		os.Exit(-3)
 	}
 
+	// ensure all new items are always appended in order
+	dbLayout.Sort()
+
 	// if output file exists and no input is specified, let's set input as
 	// the output so it will be rewritten but keeping the same order
 	if inputFile == "" && outputFile != "" {
