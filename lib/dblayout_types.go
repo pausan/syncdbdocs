@@ -260,6 +260,12 @@ func (dbTableLayout *DbTableLayout) MergeFrom(
 	for _, fieldPtr := range dbTableLayout.Fields {
 		if otherFieldPtr, ok := otherTableLayout.FieldLookup[fieldPtr.Name]; ok {
 			mergedFields = append(mergedFields, otherFieldPtr)
+
+			// in case one of the sides has a comment but not the other, leave the
+			// one with the comment
+			if otherFieldPtr.Comment == "" {
+				otherFieldPtr.Comment = fieldPtr.Comment
+			}
 		}
 	}
 

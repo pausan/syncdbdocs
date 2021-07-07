@@ -28,8 +28,32 @@ relationships of the data.
 
 ## Databases
 
-Only postgres database is supported. Hopefully it is built in a way that can be
-easily extended to other databases as well.
+postgres and mysql databases are supported. Right now only reading comments
+and updating text/md files from database definitions is supported.
+
+It should be easy to extend to other databases.
+
+### PostgreSQL
+
+- Read db definitions
+- Update text/markdown from db
+- Keep non-empty comments in the file if db has empty comments
+- -Update db from text/markdown-
+
+### MySQL
+
+- Read db definitions
+- Update text/markdown from db
+- Keep non-empty comments in the file if db has empty comments
+- -Update db from text/markdown-
+
+Note for the future: when updating db from text files, we should be careful
+since MySQL requires us to modify the whole column definition just to add
+a comment. We can screw up data. Probably best way to proceed to avoid errors
+is to create a temporary table, apply the definition there, and compare, if
+things look the same, then we can safely apply the same alter table to the
+original definition. Better to stay on the cautious side.
+Use DESCRIBE, SHOW COLUMNS or SHOW CREATE TABLE.
 
 ## Project Status
 

@@ -23,6 +23,9 @@ but we will see.
 
 - full_name [varchar128?]
 
+  This comment will test the case where there is no comment for full_name in
+  the database, but there is indeed a comment to be preserved in the text file.
+
 - language [bpchar2?]
 
   Language represents a ISO-639-2 standard value

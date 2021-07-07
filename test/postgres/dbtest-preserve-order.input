@@ -21,6 +21,8 @@ Let's see how this schema is updated
     - email [varchar]
 
       - full_name [varchar?]
+        This comment will test the case where there is no comment for full_name in the database,
+        but there is indeed a comment to be preserved in the text file.
 
     - does_not_exist [whatever]
       This will get removed when merged!!
