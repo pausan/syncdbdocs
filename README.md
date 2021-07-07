@@ -38,14 +38,14 @@ It should be easy to extend to other databases.
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
-- -Update db from text/markdown-
+- ~~Update db from text/markdown~~
 
 ### MySQL
 
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
-- -Update db from text/markdown-
+- ~~Update db from text/markdown~~
 
 Note for the future: when updating db from text files, we should be careful
 since MySQL requires us to modify the whole column definition just to add
