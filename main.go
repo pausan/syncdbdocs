@@ -117,6 +117,8 @@ func main() {
 		dbLayout.PrintMarkdown(outStream, lineLength)
 	case "txt", "plain", "text":
 		dbLayout.PrintText(outStream, lineLength)
+	case "dbml":
+		dbLayout.PrintDbml(outStream, false)
 	default:
 		dbLayout.PrintText(outStream, lineLength)
 	}

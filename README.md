@@ -61,16 +61,19 @@ Following there is a list of main features and whether or not they are supported
 
 Supported features:
 
-- Support for postgres
+- Support for postgres and mysql
 - Generate markdown documentation
+- Generate text documentation
+- Generate DBMLish file (not standard, just to have a rough view of the structure)
+- Update text & markdown from database without changing tables or field order
+
 
 Missing features:
 
-- Support for mysql, mssql, sqlite, ...
-- Generate DBML file
-- Read markdown updates
+- Support for other databases: mssql, sqlite, ...
+- Generate nicer HTML output (from text or database)
 - Update database back
-- Update markdown with new DB changes
+- Update markdown with new DB comments
 
 ## License
 
