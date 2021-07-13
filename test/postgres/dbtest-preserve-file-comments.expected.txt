@@ -1,0 +1,36 @@
+# dbtest (PostgreSQL)
+
+Hey!! This is a comment about the database we are documenting, it should appear
+the first one, and should logically wrap to whatever max line width you specify
+in syncdbdocs command line.
+
+## syncdbtest
+
+Let's see how this schema is updated
+
+### user
+
+This is the test comment that we are going to use for the user table, we can
+make it simpler, but this is long because we also want to test how good the
+algorithm of word\-wrap works sorting things out; I believe it will work well,
+but we will see.
+
+- email [varchar]
+
+  As you have figured out, this is the email address of the user
+
+- full_name [varchar?]
+
+  This comment will test the case where there is no comment for full_name in
+  the database, but there is indeed a comment to be preserved in the text file.
+
+- id [uuid]
+
+- language [bpchar?]
+
+  This is an old description of language, will get updated...
+
+- does_not_exist [whatever]
+
+  This will get removed when merged!!
+

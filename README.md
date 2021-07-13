@@ -5,30 +5,95 @@ syncdbdocs is a tool to help you keep your database documentation organized
 ## Problem to solve
 
 While not in SQL standard, widely used databases have a way of commenting
-tables and fields. This project intends to provide a way to generate
-markdown and dbml documentation from those comments from the database
-while at the same time making possible to update database comments from
-the updates to the textual representation.
+tables and fields locally.
 
-Said another way, you download current documentation to a markdown file
-or dbml file that you can open with your text editor of choice and have a simple
-view of the current schema and fields. You can edit markdown file and sync up
-the new comments/editions back to the database.
+This project aims to provide a simple command to generate a textual representation
+(in txt, markdown or dbml) of the database structure and be able to comment on it
+and keep the documentation updated easily.
+
+The original intend was to be able to sync back the documentation onto the
+database, and while still possible and probably not hard to do, I've decided
+that synching comments back to the database is not worth it due to the 
+different constraints of some databases of limiting comment length.
+
+It is probably far more useful to preserve the documentation in textual form
+and have a simple way of updating the document to include the new fields being
+added.
 
 Field order and table order will be preserved if you decide to reuse an
-existing document. New fields or tables from the database will be appended.
+existing text or markdown file. New columns, tables and schemas from the database
+will be appended in alphabetical order. Items that no longer exist will be removed.
+
+It is encouraged that you run this command automatically from your build after
+migrating database schema and commit the resulting file.
+
+## How to use
+
+### Short version (TLDR)
+
+First generate a document from scratch like this:
+
+    $ syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -o pg_dbname.txt
+
+Update documentation comments as you wish and then update database schema by
+running the following command:
+
+    $ syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -io pg_dbname.txt
+
+You won't lose the editions of any of the existing schemas/tables/fields, but
+if a schema/table/field is deleted from the database, it will be deleted from
+the document (also renames).
+
+It is encourage that you commit the documentation on your control version system
+of choice.
+
+### Long version
+
+For now only commands to sync from the database to the file are provided
+markdown and dbml documentation from those comments from the database
+in order to keep a local textual representation of the schema.
+
+Run the program once to generate the first version of the documentation, and,
+in case there are no documented columns or tables or schema in the database
+a document with the structure will be generated.
+
+Please set DB_PASSWORD environment variable before running the command, and
+select the database type with -t (or don't and it will try all drivers).
+
+Example of initial import for all database types supported:
+
+    $ syncdbdocs -t pg    -h 127.0.0.1 -u user -d dbname -o pg_dbname.txt
+    $ syncdbdocs -t mysql -h 127.0.0.1 -u user -d dbname -o mysql_dbname.txt
+    $ syncdbdocs -t mssql -h 127.0.0.1 -u user -d dbname -o mssql_dbname.txt    
+
+The command will write to stdout if no output file is provided.
+
+To update the file after making some changes to the structure of the database
+(eg adding tables or removing or renaming columns):
+
+    $ syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -i pg_dbname.txt -o pg_dbname.txt
+
+or:
+
+    $ syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -io pg_dbname.txt
+
+If you'd like to generate a markdown file or dbml instead use -format:
+
+    $ syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -format markdown -o pg_dbname.md
+    $ syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -format dbml -o pg_dbname.dbml
+
+If you want to check out more parameters, just run with -h or -help.
 
 ## Formats
 
-For now markdown and dbml are the two formats that this project will support.
+Plain **text** files, **markdown** and **dbml** are the supported formats.
 
-Markdown will include all comments and some extra information (like data types),
-while dbml is only provided to have a quick glance at the structure and
-relationships of the data.
+Markdown and text files include all comments and some extra information (like data types),
+while dbml is only provided to have a quick glance at the structure of the data.
 
 ## Databases
 
-postgres and mysql databases are supported. Right now only reading comments
+postgres, mysql and mssql are supported. Right now only reading comments
 and updating text/md files from database definitions is supported.
 
 It should be easy to extend to other databases.
@@ -38,14 +103,12 @@ It should be easy to extend to other databases.
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
-- ~~Update db from text/markdown~~
 
 ### MySQL
 
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
-- ~~Update db from text/markdown~~
 
 Note for the future: when updating db from text files, we should be careful
 since MySQL requires us to modify the whole column definition just to add
@@ -55,25 +118,30 @@ things look the same, then we can safely apply the same alter table to the
 original definition. Better to stay on the cautious side.
 Use DESCRIBE, SHOW COLUMNS or SHOW CREATE TABLE.
 
+### MS SQL Server
+
+- Read db definitions
+- Update text/markdown from db
+- Keep non-empty comments in the file if db has empty comments
+
 ## Project Status
 
 Following there is a list of main features and whether or not they are supported.
 
 Supported features:
 
-- Support for postgres and mysql
+- Support for postgres, mysql and mssql
 - Generate markdown documentation
 - Generate text documentation
 - Generate DBMLish file (not standard, just to have a rough view of the structure)
 - Update text & markdown from database without changing tables or field order
 
-
 Missing features:
 
-- Support for other databases: mssql, sqlite, ...
+- Update database back from file comments
+- Support for other databases: sqlite, oracle, ...
 - Generate nicer HTML output (from text or database)
-- Update database back
-- Update markdown with new DB comments
+- Detect primary keys, indexes, triggers or functions
 
 ## License
 

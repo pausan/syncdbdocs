@@ -20,8 +20,10 @@ func main() {
 
 	var inputFile string
 	var outputFile string
+	var inputOutputFile string
 	var format string
 	var lineLength int
+	var dbCommentsFirst bool
 	// TODO: var syncToDb bool
 
 	flag.StringVar(&dbhost, "h", "127.0.0.1", "Host you want to connect to")
@@ -31,8 +33,10 @@ func main() {
 	flag.StringVar(&dbtype, "t", "auto", "Database type: auto | pg | mysql | mariadb | mssql | sqlite")
 	flag.StringVar(&inputFile, "i", "", "Use given input file to extend on")
 	flag.StringVar(&outputFile, "o", "", "Output file to generate")
+	flag.StringVar(&inputOutputFile, "io", "", "Read and write to the same file")
 	flag.StringVar(&format, "format", "", "Output format (text | markdown | dbml)")
 	flag.IntVar(&lineLength, "line-length", 80, "Set line length for the text/markdown representation")
+	flag.BoolVar(&dbCommentsFirst, "db-comments-first", false, "By default file comments are preserved. Enable this to override file comments with db comments.")
 	// TODO: flag.BoolVar(&syncToDb, "sync-to-db", false, "Update database comments from markdown")
 
 	// dbhostEnv := os.Getenv("DB_HOST")
@@ -73,6 +77,15 @@ func main() {
 	// ensure all new items are always appended in order
 	dbLayout.Sort()
 
+	if inputOutputFile != "" {
+		if inputFile == "" {
+			inputFile = inputOutputFile
+		}
+		if outputFile == "" {
+			outputFile = inputOutputFile
+		}
+	}
+
 	// if output file exists and no input is specified, let's set input as
 	// the output so it will be rewritten but keeping the same order
 	if inputFile == "" && outputFile != "" {
@@ -89,8 +102,12 @@ func main() {
 			os.Exit(-4)
 		}
 
-		fileLayout.MergeFrom(dbLayout)
-		dbLayout = fileLayout
+		if dbCommentsFirst {
+			fileLayout.MergeFrom(dbLayout)
+			dbLayout = fileLayout
+		} else {
+			dbLayout.MergeFrom(fileLayout)
+		}
 	}
 
 	var outStream io.Writer = os.Stdout

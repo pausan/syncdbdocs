@@ -129,9 +129,11 @@ test-pg:
 	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "PG Test001.md failed" && false)
 	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "PG Test001.txt failed" && false)
 
-	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
+	$(PG_RUN_SYNCDBDOCS) -db-comments-first -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
 	diff $(PWD)/test/postgres/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "PG Test002 failed" && false)
 
+	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-preserve-file-comments.expected.txt /tmp/dbtest.result || (echo "PG Test003 failed" && false)
 
 MYSQL_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
