@@ -9,10 +9,11 @@ SYNCDBDOCS_IMAGE ?= syncdbdocs
 
 PG_CONTAINER        ?= sdd_pg_$(RANDVAR)
 MYSQL_CONTAINER     ?= sdd_mysql_$(RANDVAR)
+MSSQL_CONTAINER     ?= sdd_mssql_$(RANDVAR)
 
 PG_IMAGE_VERSION    ?= latest
 MYSQL_IMAGE_VERSION ?= latest
-# MSSQL_IMAGE_VERSION ?= latest
+MSSQL_IMAGE_VERSION ?= 2019-latest
 
 DB_NAME = dbtest
 DB_USER = root
@@ -20,6 +21,11 @@ DB_PASS = pass
 
 PG_PORT    = 5432
 MYSQL_PORT = 3306
+
+MSSQL_PORT = 1433
+MSSQL_USER = sa
+MSSQL_PASS = _asdfASDF123
+
 
 .PHONY: all test clean
 
@@ -35,7 +41,9 @@ net-up:
 net-down:
 	docker network rm $(NETWORK_NAME) || true
 
-db-up:
+db-up: | pg-up mysql-up mssql-up
+
+pg-up:
 	docker run -d --rm \
 	  --name $(PG_CONTAINER) \
 	  --network $(NETWORK_NAME) \
@@ -44,6 +52,7 @@ db-up:
 	  -e POSTGRES_PASSWORD=$(DB_PASS) \
 	  postgres:$(PG_IMAGE_VERSION)
 
+mysql-up:
 	docker run -d --rm \
 	  --name $(MYSQL_CONTAINER) \
 	  --network $(NETWORK_NAME) \
@@ -51,7 +60,15 @@ db-up:
 	  -e MYSQL_ROOT_PASSWORD=$(DB_PASS) \
 	  mysql:$(MYSQL_IMAGE_VERSION)
 
-migrate: | migrate-pg migrate-mysql
+mssql-up:
+	docker run -d --rm \
+	  --name $(MSSQL_CONTAINER) \
+	  --network $(NETWORK_NAME) \
+	  -e ACCEPT_EULA=Y \
+	  -e SA_PASSWORD=$(MSSQL_PASS) \
+	  mcr.microsoft.com/mssql/server:$(MSSQL_IMAGE_VERSION)
+
+migrate: | migrate-pg migrate-mysql migrate-mssql
 
 migrate-pg:
 	docker run --rm \
@@ -61,7 +78,7 @@ migrate-pg:
 		-url=jdbc:postgresql://$(PG_CONTAINER):$(PG_PORT)/$(DB_NAME) \
 		-user=$(DB_USER) \
 		-password=$(DB_PASS) \
-		-connectRetries=50 \
+		-connectRetries=5 \
 		migrate
 
 migrate-mysql:
@@ -72,12 +89,25 @@ migrate-mysql:
 		-url=jdbc:mysql://$(MYSQL_CONTAINER):$(MYSQL_PORT)/$(DB_NAME) \
 		-user=$(DB_USER) \
 		-password=$(DB_PASS) \
-		-connectRetries=50 \
+		-connectRetries=5 \
+		migrate
+
+migrate-mssql:
+	docker run --rm \
+	  --network $(NETWORK_NAME) \
+		-v $(PWD)/test/mssql:/flyway/sql \
+		flyway/flyway:7.11 \
+		-mixed=true \
+		"-url=jdbc:sqlserver://$(MSSQL_CONTAINER):$(MSSQL_PORT);databaseName=master" \
+		-user=$(MSSQL_USER) \
+		-password=$(MSSQL_PASS) \
+		-connectRetries=5 \
 		migrate
 
 db-down:
 	docker stop $(PG_CONTAINER) || true
 	docker stop $(MYSQL_CONTAINER) || true
+	docker stop $(MSSQL_CONTAINER) || true
 
 build:
 	docker build . --tag $(SYNCDBDOCS_IMAGE)
@@ -121,3 +151,21 @@ test-mysql:
 
 # 	$(PG_RUN_SYNCDBDOCS) -i /tmp/testmysql/dbtest-preserve-order.input > /tmp/dbtest.result
 # 	diff $(PWD)/test/mysql/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "MYSQL Test002 failed" && false)
+
+
+MSSQL_RUN_SYNCDBDOCS = docker run --rm \
+	--network $(NETWORK_NAME) \
+	-e DB_PASSWORD=$(MSSQL_PASS) \
+	-v $(PWD)/test/mysql:/tmp/testmysql/:ro \
+	$(SYNCDBDOCS_IMAGE) \
+	-h $(MSSQL_CONTAINER) \
+	-p $(MSSQL_PORT) \
+	-u $(MSSQL_USER) \
+	-d $(DB_NAME)
+
+test-mssql:
+	$(MSSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
+	diff $(PWD)/test/mssql/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "MSSQL Test001.txt failed" && false)
+
+# 	$(PG_RUN_SYNCDBDOCS) -i /tmp/testmysql/dbtest-preserve-order.input > /tmp/dbtest.result
+# 	diff $(PWD)/test/mssql/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "MSSQL Test002 failed" && false)

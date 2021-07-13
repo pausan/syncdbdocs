@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	// SQL drivers
+	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/georgysavva/scany/sqlscan"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -17,7 +18,7 @@ import (
 const (
 	DriverPostgres = "pgx"
 	DriverMysql    = "mysql"
-	DriverMssql    = "mssql"
+	DriverMssql    = "sqlserver"
 	DriverSqlite   = "sqlite"
 )
 
@@ -85,15 +86,21 @@ func DbConnect(
 	}
 
 	isZeroPort := (dbport == 0)
+	noUser := (dbuser == "")
 
 	conn := NewDbConnection()
 	conn.dbName = dbname
+
+	if noUser {
+		dbuser = "root"
+	}
 
 	switch dbtype {
 	case "pg", "postgres", "pgx":
 		if isZeroPort {
 			dbport = 5432
 		}
+
 		conn.driverType = DriverPostgres
 		conn.connectionString = fmt.Sprintf(
 			"postgres://%s:%s@%s:%d/%s", dbuser, dbpass, dbhost, dbport, dbname,
@@ -105,6 +112,18 @@ func DbConnect(
 		conn.driverType = DriverMysql
 		conn.connectionString = fmt.Sprintf(
 			"%s:%s@tcp(%s:%d)/%s", dbuser, dbpass, dbhost, dbport, dbname,
+		)
+
+	case "mssql", "sqlserver":
+		if isZeroPort {
+			dbport = 1433
+		}
+		if noUser {
+			dbuser = "sa"
+		}
+		conn.driverType = DriverMssql
+		conn.connectionString = fmt.Sprintf(
+			"sqlserver://%s:%s@%s:%d/?database=%s", dbuser, dbpass, dbhost, dbport, dbname,
 		)
 
 	default:
@@ -138,7 +157,7 @@ func tryDbConnect(
 	*DbConnection,
 	error,
 ) {
-	drivers := []string{DriverPostgres, DriverMysql}
+	drivers := []string{DriverPostgres, DriverMssql, DriverMysql}
 
 	for _, driver := range drivers {
 		conn, err := DbConnect(driver, dbhost, dbport, dbuser, dbpass, dbname)
@@ -183,6 +202,8 @@ func (conn *DbConnection) GetLayout() (*DbLayout, error) {
 		return conn.getPostgresDbLayout()
 	case DriverMysql:
 		return conn.getMysqlDbLayout()
+	case DriverMssql:
+		return conn.getMssqlDbLayout()
 	default:
 		return nil, errors.New("Don't know how to read db layout for " + conn.driverType + " databases")
 	}

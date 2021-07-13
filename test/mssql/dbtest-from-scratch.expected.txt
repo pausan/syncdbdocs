@@ -1,0 +1,45 @@
+# dbtest (MySQL)
+
+Hey!! This is a comment about the database we are documenting, it should appear
+the first one, and should logically wrap to whatever max line width you specify
+in syncdbdocs command line.
+
+## syncdbtest
+
+Let's see how this comment about the schema works out.
+
+### user
+
+This is the test comment that we are going to use for the user table, we can
+make it simpler, but this is long because we also want to test how good the
+algorithm of word-wrap works sorting things out; I believe it will work well,
+but we will see.
+
+- access [varchar]
+
+  Access level that this user has in the current system
+
+- country_code [char]
+
+  Country code represents a ISO-3166 alpha-2 value. Should not be NULL.
+
+- created_date [datetime]
+
+- email [varchar]
+
+  As you have figured out, this is the email address of the user
+
+- full_name [varchar?]
+
+- id [int?]
+
+- language [char?]
+
+  Language represents a ISO-639-2 standard value
+
+- password [varchar]
+
+  Password *** _ ## \\ \\`{}[]<>()#*+-_.!| **markdown** escape check
+
+- updated_date [datetime]
+

@@ -26,7 +26,7 @@ func main() {
 
 	flag.StringVar(&dbhost, "h", "127.0.0.1", "Host you want to connect to")
 	flag.UintVar(&dbport, "p", 0, "Port on given host you want to connect to")
-	flag.StringVar(&dbuser, "u", "", "Username credentials (password should be set via DBPASSWORD env var)")
+	flag.StringVar(&dbuser, "u", "", "Username credentials (password should be set via DB_PASSWORD env var)")
 	flag.StringVar(&dbname, "d", "", "Database name you want to connect to")
 	flag.StringVar(&dbtype, "t", "auto", "Database type: auto | pg | mysql | mariadb | mssql | sqlite")
 	flag.StringVar(&inputFile, "i", "", "Use given input file to extend on")
@@ -47,14 +47,7 @@ func main() {
 		os.Exit(-1)
 	}
 
-	// TODO: guess type from port, or just try
-	if dbport == 0 {
-		dbport = 5432
-	}
-
-	if len(dbuser) == 0 && len(dbuserEnv) == 0 {
-		dbuser = "root"
-	} else if len(dbuser) == 0 {
+	if len(dbuser) == 0 && len(dbuserEnv) != 0 {
 		dbuser = dbuserEnv
 	}
 

@@ -50,3 +50,26 @@ jobs:
           make up
           make test-mysql
           make down
+
+  run-mssql-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mssql_version: [
+          "2017-latest", "2019-latest"
+        ]
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Build & test mssql
+        env:
+          MSSQL_VERSION: ${{ matrix.mssql_version }}
+
+        run: |
+          cd ${{ github.workspace }}
+          make build
+          make up
+          make test-mssql
+          make down
