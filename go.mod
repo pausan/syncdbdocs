@@ -1,4 +1,4 @@
-module syncdbdocs
+module github.com/pausan/syncdbdocs
 
 go 1.15
 

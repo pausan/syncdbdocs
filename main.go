@@ -7,7 +7,8 @@ import (
 	"io"
 	"os"
 	"strings"
-	"syncdbdocs/lib"
+
+	"github.com/pausan/syncdbdocs/lib"
 )
 
 func main() {
