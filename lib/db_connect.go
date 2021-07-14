@@ -13,13 +13,14 @@ import (
 	"github.com/georgysavva/scany/sqlscan"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
 	DriverPostgres = "pgx"
 	DriverMysql    = "mysql"
 	DriverMssql    = "sqlserver"
-	DriverSqlite   = "sqlite"
+	DriverSqlite   = "sqlite3"
 )
 
 type DbConnection struct {
@@ -126,6 +127,10 @@ func DbConnect(
 			"sqlserver://%s:%s@%s:%d/?database=%s", dbuser, dbpass, dbhost, dbport, dbname,
 		)
 
+	case "sqlite", "sqlite3":
+		conn.driverType = DriverSqlite
+		conn.connectionString = fmt.Sprintf("file:%s?cache=shared", dbhost)
+
 	default:
 		conn = nil
 		return nil, errors.New("Unsupported database type. Try with: pg | mysql | mssql | sqlite")
@@ -157,7 +162,7 @@ func tryDbConnect(
 	*DbConnection,
 	error,
 ) {
-	drivers := []string{DriverPostgres, DriverMssql, DriverMysql}
+	drivers := []string{DriverSqlite, DriverPostgres, DriverMssql, DriverMysql}
 
 	for _, driver := range drivers {
 		conn, err := DbConnect(driver, dbhost, dbport, dbuser, dbpass, dbname)
@@ -204,6 +209,8 @@ func (conn *DbConnection) GetLayout() (*DbLayout, error) {
 		return conn.getMysqlDbLayout()
 	case DriverMssql:
 		return conn.getMssqlDbLayout()
+	case DriverSqlite:
+		return conn.getSqliteDbLayout()
 	default:
 		return nil, errors.New("Don't know how to read db layout for " + conn.driverType + " databases")
 	}

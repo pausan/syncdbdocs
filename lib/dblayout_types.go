@@ -45,7 +45,7 @@ const (
 	DbTypePostgres = "PostgreSQL"
 	DbTypeMysql    = "MySQL"
 	DbTypeMssql    = "MSSQL"
-	DbTypeSQLite   = "SQLite"
+	DbTypeSqlite   = "SQLite"
 )
 
 const NoDbSchemaLayoutName = ""
@@ -275,6 +275,9 @@ func (dbTableLayout *DbTableLayout) MergeFrom(
 			mergedFields = append(mergedFields, otherFieldPtr)
 		}
 	}
+
+	// TODO: leave deleted items with a flag so when we print them out
+	//       they will still appear as deleted but with ~~ in the markdown
 
 	dbTableLayout.Name = otherTableLayout.Name
 	dbTableLayout.Comment = otherTableLayout.Comment

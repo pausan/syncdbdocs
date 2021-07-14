@@ -3,6 +3,9 @@
 # ------------------------------------------------------------------------------
 FROM golang:1.16.5-alpine3.14 as build
 
+# go sqlite dependency needs GCC
+RUN apk add build-base
+
 COPY    go.* /usr/src/syncdbdocs/
 WORKDIR /usr/src/syncdbdocs
 RUN     go mod download

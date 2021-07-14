@@ -19,7 +19,7 @@ import (
 // -----------------------------------------------------------------------------
 func (conn *DbConnection) getMssqlDbLayout() (*DbLayout, error) {
 	dbLayout := NewDbLayout(conn.dbName)
-	dbLayout.Type = DbTypeMysql
+	dbLayout.Type = DbTypeMssql
 
 	err := conn.fetchMssqlColumnInfo(&dbLayout)
 	if err != nil {

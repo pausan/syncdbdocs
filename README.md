@@ -62,9 +62,10 @@ select the database type with -t (or don't and it will try all drivers).
 
 Example of initial import for all database types supported:
 
-    $ syncdbdocs -t pg    -h 127.0.0.1 -u user -d dbname -o pg_dbname.txt
-    $ syncdbdocs -t mysql -h 127.0.0.1 -u user -d dbname -o mysql_dbname.txt
-    $ syncdbdocs -t mssql -h 127.0.0.1 -u user -d dbname -o mssql_dbname.txt    
+    $ syncdbdocs -t pg     -h 127.0.0.1 -u user -d dbname -o pg_dbname.txt
+    $ syncdbdocs -t mysql  -h 127.0.0.1 -u user -d dbname -o mysql_dbname.txt
+    $ syncdbdocs -t mssql  -h 127.0.0.1 -u user -d dbname -o mssql_dbname.txt
+    $ syncdbdocs -t sqlite -h sqlite_file.db    -d dbname -o sqlite_dbname.txt
 
 The command will write to stdout if no output file is provided.
 
@@ -124,13 +125,21 @@ Use DESCRIBE, SHOW COLUMNS or SHOW CREATE TABLE.
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
 
+### SQLite
+
+This database does not support comments, but this tool supports pulling the
+database structure from it to update a comment file.
+
+- Read db definitions
+- Update text/markdown from db
+
 ## Project Status
 
 Following there is a list of main features and whether or not they are supported.
 
 Supported features:
 
-- Support for postgres, mysql and mssql
+- Support for postgres, mysql, mssql and sqlite
 - Generate markdown documentation
 - Generate text documentation
 - Generate DBMLish file (not standard, just to have a rough view of the structure)
@@ -139,7 +148,7 @@ Supported features:
 Missing features:
 
 - Update database back from file comments
-- Support for other databases: sqlite, oracle, ...
+- Support for other databases: oracle, ...
 - Generate nicer HTML output (from text or database)
 - Detect primary keys, indexes, triggers or functions
 

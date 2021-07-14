@@ -26,6 +26,8 @@ MSSQL_PORT = 1433
 MSSQL_USER = sa
 MSSQL_PASS = _asdfASDF123
 
+SQLITE_FILE = testdb.db
+
 
 .PHONY: all test clean
 
@@ -104,6 +106,18 @@ migrate-mssql:
 		-connectRetries=5 \
 		migrate
 
+migrate-sqlite:
+	rm -f $(PWD)/test/sqlite/$(SQLITE_FILE)
+	touch $(PWD)/test/sqlite/$(SQLITE_FILE)
+	docker run --rm \
+		-v $(PWD)/test/sqlite:/db:rw \
+		debian:stable \
+		bash -c " \
+		apt update \
+		&& apt install sqlite3 -y  \
+		&& sqlite3 /db/$(SQLITE_FILE) < /db/V1__dbimport.sql \
+		"
+
 db-down:
 	docker stop $(PG_CONTAINER) || true
 	docker stop $(MYSQL_CONTAINER) || true
@@ -151,10 +165,6 @@ test-mysql:
 	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "MYSQL Test001.md failed" && false)
 	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "MYSQL Test001.txt failed" && false)
 
-# 	$(PG_RUN_SYNCDBDOCS) -i /tmp/testmysql/dbtest-preserve-order.input > /tmp/dbtest.result
-# 	diff $(PWD)/test/mysql/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "MYSQL Test002 failed" && false)
-
-
 MSSQL_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
 	-e DB_PASSWORD=$(MSSQL_PASS) \
@@ -169,5 +179,15 @@ test-mssql:
 	$(MSSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
 	diff $(PWD)/test/mssql/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "MSSQL Test001.txt failed" && false)
 
-# 	$(PG_RUN_SYNCDBDOCS) -i /tmp/testmysql/dbtest-preserve-order.input > /tmp/dbtest.result
-# 	diff $(PWD)/test/mssql/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "MSSQL Test002 failed" && false)
+SQLITE_RUN_SYNCDBDOCS = docker run --rm \
+	--network $(NETWORK_NAME) \
+	-e DB_PASSWORD=$(MSSQL_PASS) \
+	-v $(PWD)/test/sqlite:/tmp/testsqlite/:ro \
+	$(SYNCDBDOCS_IMAGE) \
+	-h /tmp/testsqlite/$(SQLITE_FILE) \
+	-d $(DB_NAME)
+
+test-sqlite:
+	$(SQLITE_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
+	diff $(PWD)/test/sqlite/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "SQLITE Test001.txt failed" && false)
+

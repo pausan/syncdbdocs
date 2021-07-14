@@ -1,0 +1,80 @@
+# dbtest (SQLite)
+
+### multiple_types
+
+- _bigint [BIGINT?]
+
+- _blob [BLOB?]
+
+- _boolean [BOOLEAN?]
+
+- _character [CHARACTER(20)?]
+
+- _clob [CLOB?]
+
+- _date [DATE?]
+
+- _datetime [DATETIME?]
+
+- _decimal [DECIMAL(10,5)?]
+
+- _double [DOUBLE?]
+
+- _double_precision [DOUBLE PRECISION?]
+
+- _float [FLOAT?]
+
+- _int [INT?]
+
+- _int2 [INT2?]
+
+- _int8 [INT8?]
+
+- _integer [INTEGER?]
+
+- _mediumint [MEDIUMINT?]
+
+- _natchar [NATIVE CHARACTER(70)?]
+
+- _nchar [NCHAR(55)?]
+
+- _numeric [NUMERIC?]
+
+- _nvarchar [NVARCHAR(100)?]
+
+- _real [REAL?]
+
+- _smallint [SMALLINT?]
+
+- _text [TEXT?]
+
+- _tinyint [TINYINT?]
+
+- _ubigint [UNSIGNED BIG INT?]
+
+- _varchar [VARCHAR(255)?]
+
+- _varchar2 [VARYING CHARACTER(25)?]
+
+- id [INTEGER?]
+
+### user
+
+- access [TEXT]
+
+- country_code [CHAR(2)]
+
+- created_date [TIMESTAMP]
+
+- email [VARCHAR(128)]
+
+- full_name [VARCHAR(128)?]
+
+- id [INTEGER?]
+
+- language [CHAR(2)?]
+
+- password [VARCHAR(256)]
+
+- updated_date [TIMESTAMP]
+
