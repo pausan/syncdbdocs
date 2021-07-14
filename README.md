@@ -27,6 +27,10 @@ will be appended in alphabetical order. Items that no longer exist will be remov
 It is encouraged that you run this command automatically from your build after
 migrating database schema and commit the resulting file.
 
+## Installation
+
+    $ go get github.com/pausan/syncdbdocs
+
 ## How to use
 
 ### Short version (TLDR)

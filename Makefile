@@ -70,7 +70,7 @@ mssql-up:
 	  -e SA_PASSWORD=$(MSSQL_PASS) \
 	  mcr.microsoft.com/mssql/server:$(MSSQL_IMAGE_VERSION)
 
-migrate: | migrate-pg migrate-mysql migrate-mssql
+migrate: | migrate-pg migrate-mysql migrate-mssql migrate-sqlite
 
 migrate-pg:
 	docker run --rm \
@@ -181,7 +181,6 @@ test-mssql:
 
 SQLITE_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
-	-e DB_PASSWORD=$(MSSQL_PASS) \
 	-v $(PWD)/test/sqlite:/tmp/testsqlite/:ro \
 	$(SYNCDBDOCS_IMAGE) \
 	-h /tmp/testsqlite/$(SQLITE_FILE) \

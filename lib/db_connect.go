@@ -2,6 +2,7 @@
 package lib
 
 import (
+	"os"
 	"context"
 	"database/sql"
 	"errors"
@@ -129,7 +130,11 @@ func DbConnect(
 
 	case "sqlite", "sqlite3":
 		conn.driverType = DriverSqlite
-		conn.connectionString = fmt.Sprintf("file:%s?cache=shared", dbhost)
+		conn.connectionString = fmt.Sprintf("file:%s?cache=shared&mode=ro", dbhost)
+
+	  if _, err := os.Stat(dbhost); err != nil {
+	  	return nil, errors.New(fmt.Sprintf("File %s should exist", dbhost))
+	  }
 
 	default:
 		conn = nil

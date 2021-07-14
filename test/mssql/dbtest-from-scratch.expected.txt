@@ -1,4 +1,4 @@
-# dbtest (MySQL)
+# dbtest (MSSQL)
 
 Hey!! This is a comment about the database we are documenting, it should appear
 the first one, and should logically wrap to whatever max line width you specify
