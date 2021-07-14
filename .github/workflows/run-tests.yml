@@ -73,3 +73,17 @@ jobs:
           make up
           make test-mssql
           make down
+
+  run-sqlite-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Build & test sqlite
+        run: |
+          cd ${{ github.workspace }}
+          make build
+          make up
+          make test-sqlite
+          make down
