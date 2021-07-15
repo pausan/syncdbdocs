@@ -25,6 +25,7 @@ func main() {
 	var format string
 	var lineLength int
 	var dbCommentsFirst bool
+	var cleanDeletedItems bool
 	// TODO: var syncToDb bool
 
 	flag.StringVar(&dbhost, "h", "127.0.0.1", "Host you want to connect to")
@@ -38,6 +39,7 @@ func main() {
 	flag.StringVar(&format, "format", "", "Output format (text | markdown | dbml)")
 	flag.IntVar(&lineLength, "line-length", 80, "Set line length for the text/markdown representation")
 	flag.BoolVar(&dbCommentsFirst, "db-comments-first", false, "By default file comments are preserved. Enable this to override file comments with db comments.")
+	flag.BoolVar(&cleanDeletedItems, "clean", false, "By default existing schemas/tables/fields are preserved even if removed from database. With clean they will get effectively removed from the output")
 	// TODO: flag.BoolVar(&syncToDb, "sync-to-db", false, "Update database comments from markdown")
 
 	// dbhostEnv := os.Getenv("DB_HOST")
@@ -103,12 +105,10 @@ func main() {
 			os.Exit(-4)
 		}
 
-		if dbCommentsFirst {
-			fileLayout.MergeFrom(dbLayout)
-			dbLayout = fileLayout
-		} else {
-			dbLayout.MergeFrom(fileLayout)
-		}
+		preserveFileComments := !dbCommentsFirst
+		preserveMissingItems := !cleanDeletedItems
+		fileLayout.MergeFrom(dbLayout, preserveFileComments, preserveMissingItems)
+		dbLayout = fileLayout
 	}
 
 	var outStream io.Writer = os.Stdout
@@ -126,7 +126,7 @@ func main() {
 	switch strings.ToLower(format) {
 	case "md", "markdown":
 		dbLayout.PrintMarkdown(outStream, lineLength)
-	case "txt", "plain", "text":
+	case "txt", "text", "plain":
 		dbLayout.PrintText(outStream, lineLength)
 	case "dbml":
 		dbLayout.PrintDbml(outStream, false)

@@ -49,6 +49,7 @@ const (
 )
 
 const NoDbSchemaLayoutName = ""
+const DeletedPrefix = "__DELETED__"
 
 // -----------------------------------------------------------------------------
 // NewDbLayout
@@ -185,14 +186,23 @@ func (dbLayout *DbLayout) GetTable(schema string, table string) *DbTableLayout {
 // Merges schemas, tables and fields that exist on provided layout by preserving
 // the order from the current layout.
 // -----------------------------------------------------------------------------
-func (dbLayout *DbLayout) MergeFrom(otherLayout *DbLayout) {
+func (dbLayout *DbLayout) MergeFrom(
+	otherLayout *DbLayout,
+	preserveComments bool,
+	preserveMissing bool,
+) {
 	mergedSchemas := make([]*DbSchemaLayout, 0, len(otherLayout.Schemas))
+	deletedSchemas := make([]*DbSchemaLayout, 0)
 
 	// insert in order
 	for _, schemaPtr := range dbLayout.Schemas {
 		if otherSchemaPtr, ok := otherLayout.SchemaLookup[schemaPtr.Name]; ok {
-			schemaPtr.MergeFrom(otherSchemaPtr, false)
+			schemaPtr.MergeFrom(otherSchemaPtr, preserveComments, preserveMissing, false)
 			mergedSchemas = append(mergedSchemas, schemaPtr)
+		} else if preserveMissing {
+			dupSchema := *schemaPtr
+			dupSchema.Name = DeletedPrefix + dupSchema.Name
+			deletedSchemas = append(deletedSchemas, &dupSchema)
 		}
 	}
 
@@ -205,8 +215,11 @@ func (dbLayout *DbLayout) MergeFrom(otherLayout *DbLayout) {
 
 	dbLayout.Name = otherLayout.Name
 	dbLayout.Type = otherLayout.Type
-	dbLayout.Comment = otherLayout.Comment
-	dbLayout.Schemas = mergedSchemas
+	dbLayout.Schemas = append(mergedSchemas, deletedSchemas...)
+
+	if !preserveComments || dbLayout.Comment == "" {
+		dbLayout.Comment = otherLayout.Comment
+	}
 
 	dbLayout.RebuildLookups()
 }
@@ -219,15 +232,22 @@ func (dbLayout *DbLayout) MergeFrom(otherLayout *DbLayout) {
 // -----------------------------------------------------------------------------
 func (dbSchemaLayout *DbSchemaLayout) MergeFrom(
 	otherSchemaLayout *DbSchemaLayout,
+	preserveComments bool,
+	preserveMissing bool,
 	rebuildLookups bool,
 ) {
 	mergedTables := make([]*DbTableLayout, 0, len(otherSchemaLayout.Tables))
+	deletedTables := make([]*DbTableLayout, 0)
 
 	// insert in order
 	for _, tablePtr := range dbSchemaLayout.Tables {
 		if otherTableLayout, ok := otherSchemaLayout.TableLookup[tablePtr.Name]; ok {
-			tablePtr.MergeFrom(otherTableLayout, rebuildLookups)
+			tablePtr.MergeFrom(otherTableLayout, preserveComments, preserveMissing, rebuildLookups)
 			mergedTables = append(mergedTables, tablePtr)
+		} else if preserveMissing {
+			dupTable := *tablePtr
+			dupTable.Name = DeletedPrefix + dupTable.Name
+			deletedTables = append(deletedTables, &dupTable)
 		}
 	}
 
@@ -239,8 +259,11 @@ func (dbSchemaLayout *DbSchemaLayout) MergeFrom(
 	}
 
 	dbSchemaLayout.Name = otherSchemaLayout.Name
-	dbSchemaLayout.Comment = otherSchemaLayout.Comment
-	dbSchemaLayout.Tables = mergedTables
+	dbSchemaLayout.Tables = append(mergedTables, deletedTables...)
+
+	if !preserveComments || dbSchemaLayout.Comment == "" {
+		dbSchemaLayout.Comment = otherSchemaLayout.Comment
+	}
 
 	if rebuildLookups {
 		dbSchemaLayout.RebuildLookups()
@@ -252,9 +275,12 @@ func (dbSchemaLayout *DbSchemaLayout) MergeFrom(
 // -----------------------------------------------------------------------------
 func (dbTableLayout *DbTableLayout) MergeFrom(
 	otherTableLayout *DbTableLayout,
+	preserveComments bool,
+	preserveMissing bool,
 	rebuildLookups bool,
 ) {
 	mergedFields := []*DbFieldLayout{}
+	deletedFields := []*DbFieldLayout{}
 
 	// insert fields in order that exist in both sides
 	for _, fieldPtr := range dbTableLayout.Fields {
@@ -263,9 +289,13 @@ func (dbTableLayout *DbTableLayout) MergeFrom(
 
 			// in case one of the sides has a comment but not the other, leave the
 			// one with the comment
-			if otherFieldPtr.Comment == "" {
+			if preserveComments || otherFieldPtr.Comment == "" {
 				otherFieldPtr.Comment = fieldPtr.Comment
 			}
+		} else if preserveMissing {
+			dupField := *fieldPtr
+			dupField.Name = DeletedPrefix + dupField.Name
+			deletedFields = append(deletedFields, &dupField)
 		}
 	}
 
@@ -280,8 +310,11 @@ func (dbTableLayout *DbTableLayout) MergeFrom(
 	//       they will still appear as deleted but with ~~ in the markdown
 
 	dbTableLayout.Name = otherTableLayout.Name
-	dbTableLayout.Comment = otherTableLayout.Comment
-	dbTableLayout.Fields = mergedFields
+	dbTableLayout.Fields = append(mergedFields, deletedFields...)
+
+	if !preserveComments || dbTableLayout.Comment == "" {
+		dbTableLayout.Comment = otherTableLayout.Comment
+	}
 
 	if rebuildLookups {
 		dbTableLayout.RebuildLookups()

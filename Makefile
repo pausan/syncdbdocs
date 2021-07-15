@@ -138,16 +138,20 @@ PG_RUN_SYNCDBDOCS = docker run --rm \
 	-d $(DB_NAME)
 
 test-pg:
-	$(PG_RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result.md
-	$(PG_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
-	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "PG Test001.md failed" && false)
-	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "PG Test001.txt failed" && false)
+	$(PG_RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.md /tmp/dbtest.result || (echo "PG Test001.md failed" && false)
 
-	$(PG_RUN_SYNCDBDOCS) -db-comments-first -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
-	diff $(PWD)/test/postgres/dbtest-preserve-order.expected.txt /tmp/dbtest.result || (echo "PG Test002 failed" && false)
+	$(PG_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-from-scratch.expected.txt /tmp/dbtest.result || (echo "PG Test001.txt failed" && false)
 
-	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest-preserve-order.input > /tmp/dbtest.result
-	diff $(PWD)/test/postgres/dbtest-preserve-file-comments.expected.txt /tmp/dbtest.result || (echo "PG Test003 failed" && false)
+	$(PG_RUN_SYNCDBDOCS) -db-comments-first -clean -i /tmp/testpg/dbtest.input > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-preserve-order-clean.expected.txt /tmp/dbtest.result || (echo "PG Test002 failed" && false)
+
+	$(PG_RUN_SYNCDBDOCS) -clean -i /tmp/testpg/dbtest.input > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-preserve-file-comments-clean.expected.txt /tmp/dbtest.result || (echo "PG Test003 failed" && false)
+
+	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest.input > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-preserve-order-and-fields.expected.txt /tmp/dbtest.result || (echo "PG Test004 failed" && false)
 
 MYSQL_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
@@ -160,10 +164,10 @@ MYSQL_RUN_SYNCDBDOCS = docker run --rm \
 	-d $(DB_NAME)
 
 test-mysql:
-	$(MYSQL_RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result.md
-	$(MYSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
-	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.md /tmp/dbtest.result.md || (echo "MYSQL Test001.md failed" && false)
-	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "MYSQL Test001.txt failed" && false)
+	$(MYSQL_RUN_SYNCDBDOCS) -format=md > /tmp/dbtest.result
+	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.md /tmp/dbtest.result || (echo "MYSQL Test001.md failed" && false)
+	$(MYSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result
+	diff $(PWD)/test/mysql/dbtest-from-scratch.expected.txt /tmp/dbtest.result || (echo "MYSQL Test001.txt failed" && false)
 
 MSSQL_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
@@ -176,8 +180,8 @@ MSSQL_RUN_SYNCDBDOCS = docker run --rm \
 	-d $(DB_NAME)
 
 test-mssql:
-	$(MSSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
-	diff $(PWD)/test/mssql/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "MSSQL Test001.txt failed" && false)
+	$(MSSQL_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result
+	diff $(PWD)/test/mssql/dbtest-from-scratch.expected.txt /tmp/dbtest.result || (echo "MSSQL Test001.txt failed" && false)
 
 SQLITE_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
@@ -187,6 +191,6 @@ SQLITE_RUN_SYNCDBDOCS = docker run --rm \
 	-d $(DB_NAME)
 
 test-sqlite:
-	$(SQLITE_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result.txt
-	diff $(PWD)/test/sqlite/dbtest-from-scratch.expected.txt /tmp/dbtest.result.txt || (echo "SQLITE Test001.txt failed" && false)
+	$(SQLITE_RUN_SYNCDBDOCS) -format=text > /tmp/dbtest.result
+	diff $(PWD)/test/sqlite/dbtest-from-scratch.expected.txt /tmp/dbtest.result || (echo "SQLITE Test001.txt failed" && false)
 

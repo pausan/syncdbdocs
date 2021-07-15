@@ -31,3 +31,17 @@ Let's see how this schema is updated
 
         This is an old description of language, will get updated...
 
+
+  ### deleted_table
+
+  whatever
+
+  - old_field [uuid]
+
+    this was an old field
+
+## my_deleted_schema
+
+### user
+
+ - field

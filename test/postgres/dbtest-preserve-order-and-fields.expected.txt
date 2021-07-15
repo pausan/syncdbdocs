@@ -1,0 +1,180 @@
+# dbtest (PostgreSQL)
+
+Hey!! This is a comment about the database we are documenting, it should appear
+the first one, and should logically wrap to whatever max line width you specify
+in syncdbdocs command line.
+
+## syncdbtest
+
+Let's see how this schema is updated
+
+### user
+
+This is the test comment that we are going to use for the user table, we can
+make it simpler, but this is long because we also want to test how good the
+algorithm of word\-wrap works sorting things out; I believe it will work well,
+but we will see.
+
+- id [uuid]
+
+- email [varchar128]
+
+- full_name [varchar128?]
+
+  This comment will test the case where there is no comment for full_name in
+  the database, but there is indeed a comment to be preserved in the text file.
+
+- language [bpchar2?]
+
+  This is an old description of language, will get updated...
+
+- access [access_level]
+
+  Access level that this user has in the current system
+
+- country_code [bpchar2]
+
+  Country code represents a ISO-3166 alpha-2 value. Should not be NULL.
+
+- created_date [timestamp]
+
+- password [varchar256]
+
+  Password *** _ ## \\ \\`{}[]<>()#*+-_.!| **markdown** escape check
+
+- updated_date [timestamp]
+
+- __DELETED__does_not_exist [whatever]
+
+  This will get removed when merged!!
+
+### multiple_types
+
+- _access_level [access_level]
+
+- _bigint [int8?]
+
+- _bigserial [int8]
+
+- _bit [bit1?]
+
+- _boolean [bool?]
+
+- _box [box?]
+
+- _bytea [bytea?]
+
+- _char16 [bpchar16?]
+
+- _char2 [bpchar2?]
+
+- _character [bpchar1?]
+
+- _cidr [cidr?]
+
+- _circle [circle?]
+
+- _date [date?]
+
+- _double [float8?]
+
+- _inet [inet?]
+
+- _integer [int4?]
+
+- _interval [interval?]
+
+- _json [json?]
+
+- _jsonb [jsonb?]
+
+- _line [line?]
+
+- _lseg [lseg?]
+
+- _macaddr [macaddr?]
+
+- _money [money?]
+
+- _numeric [numeric?]
+
+- _path [path?]
+
+- _pg_lsn [pg_lsn?]
+
+- _point [point?]
+
+- _polygon [polygon?]
+
+- _real [float4?]
+
+- _serial [int4]
+
+- _smallint [int2?]
+
+- _smallintcheck [int2?]
+
+- _smallserial [int2]
+
+- _text [text?]
+
+- _time [time?]
+
+- _timestamp [timestamp?]
+
+- _tsquery [tsquery?]
+
+- _tsvector [tsvector?]
+
+- _txid_snapshot [txid_snapshot?]
+
+- _uint2 [int4?]
+
+- _uuid [uuid]
+
+- _varchar16 [varchar64]
+
+- _varchar64 [varchar64]
+
+- _xml [xml?]
+
+### __DELETED__deleted_table
+
+whatever
+
+- old_field [uuid]
+
+  this was an old field
+
+## public
+
+standard public schema
+
+### flyway_schema_history
+
+- checksum [int4?]
+
+- description [varchar200]
+
+- execution_time [int4]
+
+- installed_by [varchar100]
+
+- installed_on [timestamp]
+
+- installed_rank [int4]
+
+- script [varchar1000]
+
+- success [bool]
+
+- type [varchar20]
+
+- version [varchar50?]
+
+## __DELETED__my_deleted_schema
+
+### user
+
+- field []
+
