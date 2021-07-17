@@ -1,11 +1,12 @@
 # syncdbdocs
 
-syncdbdocs is a tool to help you keep your database documentation organized
+syncdbdocs is a tool to help you keep your database documented with a single
+source of truth
 
 ## Problem to solve
 
 While not in SQL standard, widely used databases have a way of commenting
-tables and fields locally.
+tables and fields, althought it is usually very limited and cumbersome.
 
 This project aims to provide a simple command to generate a textual representation
 (in txt, markdown or dbml) of the database structure and be able to comment on it
@@ -14,7 +15,8 @@ and keep the documentation updated easily.
 The original intend was to be able to sync back the documentation onto the
 database, and while still possible and probably not hard to do, I've decided
 that synching comments back to the database is not worth it due to the 
-different constraints of some databases of limiting comment length.
+different constraints of some databases of limiting comment length and/or
+comment availability altogether.
 
 It is probably far more useful to preserve the documentation in textual form
 and have a simple way of updating the document to include the new fields being
@@ -22,7 +24,8 @@ added.
 
 Field order and table order will be preserved if you decide to reuse an
 existing text or markdown file. New columns, tables and schemas from the database
-will be appended in alphabetical order. Items that no longer exist will be removed.
+will be appended in alphabetical order. Items that no longer exist will be marked
+as deleted.
 
 It is encouraged that you run this command automatically from your build after
 migrating database schema and commit the resulting file.
@@ -30,6 +33,10 @@ migrating database schema and commit the resulting file.
 ## Installation
 
     $ go get github.com/pausan/syncdbdocs
+
+or use docker
+
+    $ docker pull pausan/syncdbdocs
 
 ## How to use
 
@@ -50,6 +57,15 @@ the document (also renames).
 
 It is encourage that you commit the documentation on your control version system
 of choice.
+
+### Docker Image
+
+A tiny docker image is available so you can use it if you won't want to install
+with go or you don't have a go compiler available.
+
+You can use it like this:
+
+    $ docker run pausan/syncdbdocs -t pg -h 127.0.0.1 -u user -d dbname -io pg_dbname.txt
 
 ### Long version
 
@@ -108,12 +124,14 @@ It should be easy to extend to other databases.
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
+- Tested with postgres 9.x, 10.x, 11.x and 12.x
 
 ### MySQL
 
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
+- Tested with mysql v8.x
 
 Note for the future: when updating db from text files, we should be careful
 since MySQL requires us to modify the whole column definition just to add
@@ -128,6 +146,7 @@ Use DESCRIBE, SHOW COLUMNS or SHOW CREATE TABLE.
 - Read db definitions
 - Update text/markdown from db
 - Keep non-empty comments in the file if db has empty comments
+- Tested with sql server 2017 and 2019
 
 ### SQLite
 
@@ -136,6 +155,7 @@ database structure from it to update a comment file.
 
 - Read db definitions
 - Update text/markdown from db
+- Tested with sqlite 3.x
 
 ## Project Status
 
@@ -144,8 +164,8 @@ Following there is a list of main features and whether or not they are supported
 Supported features:
 
 - Support for postgres, mysql, mssql and sqlite
-- Generate markdown documentation
-- Generate text documentation
+- Generate/update markdown documentation
+- Generate/update text documentation
 - Generate DBMLish file (not standard, just to have a rough view of the structure)
 - Update text & markdown from database without changing tables or field order
 

@@ -4,6 +4,7 @@ package lib
 import (
 	"errors"
 	"sort"
+	"strings"
 )
 
 type DbFieldLayout struct {
@@ -201,7 +202,7 @@ func (dbLayout *DbLayout) MergeFrom(
 			mergedSchemas = append(mergedSchemas, schemaPtr)
 		} else if preserveMissing {
 			dupSchema := *schemaPtr
-			dupSchema.Name = DeletedPrefix + dupSchema.Name
+			dupSchema.Name = addDeletedPrefix(dupSchema.Name)
 			deletedSchemas = append(deletedSchemas, &dupSchema)
 		}
 	}
@@ -246,7 +247,7 @@ func (dbSchemaLayout *DbSchemaLayout) MergeFrom(
 			mergedTables = append(mergedTables, tablePtr)
 		} else if preserveMissing {
 			dupTable := *tablePtr
-			dupTable.Name = DeletedPrefix + dupTable.Name
+			dupTable.Name = addDeletedPrefix(dupTable.Name)
 			deletedTables = append(deletedTables, &dupTable)
 		}
 	}
@@ -294,7 +295,7 @@ func (dbTableLayout *DbTableLayout) MergeFrom(
 			}
 		} else if preserveMissing {
 			dupField := *fieldPtr
-			dupField.Name = DeletedPrefix + dupField.Name
+			dupField.Name = addDeletedPrefix(dupField.Name)
 			deletedFields = append(deletedFields, &dupField)
 		}
 	}
@@ -412,4 +413,14 @@ func (dbSchemaLayout *DbSchemaLayout) Sort() {
 // -----------------------------------------------------------------------------
 func (dbTableLayout *DbTableLayout) Sort() {
 	sort.Sort(byFieldName(dbTableLayout.Fields))
+}
+
+// -----------------------------------------------------------------------------
+// Add given prefix to the name if not already present
+// -----------------------------------------------------------------------------
+func addDeletedPrefix(name string) string {
+	if !strings.HasPrefix(name, DeletedPrefix) {
+		name = DeletedPrefix + name
+	}
+	return name
 }

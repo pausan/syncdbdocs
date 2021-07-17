@@ -153,6 +153,10 @@ test-pg:
 	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest.input > /tmp/dbtest.result
 	diff $(PWD)/test/postgres/dbtest-preserve-order-and-fields.expected.txt /tmp/dbtest.result || (echo "PG Test004 failed" && false)
 
+	# retying with same file should leave things intact
+	$(PG_RUN_SYNCDBDOCS) -i /tmp/testpg/dbtest-preserve-order-and-fields.expected.txt > /tmp/dbtest.result
+	diff $(PWD)/test/postgres/dbtest-preserve-order-and-fields.expected.txt /tmp/dbtest.result || (echo "PG Test005 failed" && false)
+
 MYSQL_RUN_SYNCDBDOCS = docker run --rm \
 	--network $(NETWORK_NAME) \
 	-e DB_PASSWORD=$(DB_PASS) \
